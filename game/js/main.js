@@ -7,6 +7,7 @@ import { Ship } from './ship.js';
 import { Star, Comet, Debris, ParticleManager, FloatingTextManager } from './entities.js';
 import { HUD } from './hud.js';
 import { sound } from './audio.js';
+import { randomRange } from './utils.js';
 
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
@@ -17,7 +18,9 @@ let state = 'TITLE'; // TITLE, PLAYING, PAUSED, GAMEOVER
 let score = 0;
 let bestScore = parseInt(localStorage.getItem('bestScore') || '0');
 let combo = 1;
+let lastHarvestTime = 0;
 let wave = 1;
+let cometSpawnTimer = 0;
 let keys = {};
 
 // Managers & Entities
@@ -68,12 +71,6 @@ function startGame() {
 
 // Spawning Logic
 function spawnWave() {
-  const spawnR = ship ? ship.r : canvas.width / 4;
-  for (let i = 0; i < 8 + wave * 3; i++) {
-    // 50% spawn near ship
-    const r = (Math.random() < 0.5) ? spawnR : null;
-    comets.push(new Comet(canvas.width / 2, canvas.height / 2, Math.random() < 0.1 ? 'SHIELD' : (Math.random() < 0.2 ? 'MULTIPLIER' : 'STANDARD'), r));
-  }
   for (let i = 0; i < 3 + wave; i++) {
     debris.push(new Debris(canvas.width / 2, canvas.height / 2, 200 + wave * 30));
   }
@@ -102,18 +99,32 @@ function loop(now) {
       comets[i].update(dt, ship, particles, floatingText, combo);
       if (!comets[i].alive) {
         score += comets[i].lastHarvestScore;
+        combo = Math.min(combo + 1, 5);
+        lastHarvestTime = now;
         comets.splice(i, 1);
       }
+    }
+
+    if (now - lastHarvestTime > 3500 && combo > 1) {
+      combo = 1;
+    }
+
+    if (comets.length < 7) {
+      cometSpawnTimer -= dt;
+      if (cometSpawnTimer <= 0) {
+        comets.push(new Comet(canvas.width / 2, canvas.height / 2, Math.random() < 0.1 ? 'SHIELD' : (Math.random() < 0.2 ? 'MULTIPLIER' : 'STANDARD'), ship.r));
+        cometSpawnTimer = randomRange(1.2, 1.8);
+      }
+    }
+
+    if (debris.length === 0) {
+      wave++;
+      spawnWave();
     }
 
     for (let d of debris) d.update(dt, ship, particles);
     particles.update(dt);
     floatingText.update(dt);
-
-    if (comets.length === 0) {
-      wave++;
-      spawnWave();
-    }
 
     if (ship.shields <= 0) {
       state = 'GAMEOVER';

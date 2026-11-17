@@ -233,7 +233,7 @@ export class Comet {
     this.type = type; // STANDARD (Magenta), MULTIPLIER (Gold), SHIELD (Cyan)
 
     // Orbital / Trajectory parameters
-    this.r = preferredR ? preferredR + randomRange(-50, 50) : randomRange(110, 480);
+    this.r = preferredR ? preferredR + randomRange(-35, 35) : randomRange(110, 480);
     this.theta = randomRange(-Math.PI, Math.PI);
     this.omega = randomRange(0.6, 1.8) * (Math.random() < 0.5 ? 1 : -1);
     this.radialSpeed = randomRange(-20, 20);
@@ -245,7 +245,7 @@ export class Comet {
     } else {
         this.isLarge = false;
     }
-    this.harvestRadius = this.radius + 28; // Distance ship needs to get close
+    this.harvestRadius = this.isLarge ? 46 : 38; // Generous harvest radius
 
     this.alive = true;
     this.time = 0;
