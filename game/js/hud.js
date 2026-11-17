@@ -12,7 +12,7 @@ export class HUD {
     this.waveFlashTimer = 0;
   }
 
-  render(gameState, ship, score, combo, wave, time) {
+  render(gameState, ship, score, combo, wave, time, bestScore) {
     const { width, height } = this.canvas;
     const ctx = this.ctx;
     
@@ -84,7 +84,7 @@ export class HUD {
     if (gameState === 'TITLE') {
       this.renderTitle(ctx, width, height, time);
     } else if (gameState === 'GAMEOVER') {
-      this.renderOverlay(ctx, width, height, 'MISSION FAILED', 'Press ENTER to Restart');
+      this.renderGameOver(ctx, width, height, time, score, bestScore, wave);
     } else if (gameState === 'PAUSED') {
       this.renderOverlay(ctx, width, height, 'PAUSED', 'Press P to Resume');
     }
@@ -121,6 +121,43 @@ export class HUD {
     ctx.fillStyle = '#ffffff';
     ctx.font = '24px "Segoe UI", sans-serif';
     ctx.fillText('Press ENTER to Launch', width / 2, height / 2 + 80);
+  }
+
+  renderGameOver(ctx, width, height, time, score, bestScore, wave) {
+    ctx.fillStyle = 'rgba(3, 5, 13, 0.85)';
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.textAlign = 'center';
+
+    // MISSION FAILED - Red neon glow
+    ctx.shadowColor = '#ff0000';
+    ctx.shadowBlur = 20;
+    ctx.fillStyle = '#ff3333';
+    ctx.font = 'bold 64px "Segoe UI", sans-serif';
+    ctx.fillText('MISSION FAILED', width / 2, height / 2 - 100);
+    ctx.shadowBlur = 0;
+
+    // Final Score
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 48px "Segoe UI", sans-serif';
+    ctx.fillText(`FINAL SCORE: ${formatScore(score)}`, width / 2, height / 2 - 20);
+
+    // Best Score
+    ctx.fillStyle = '#ffd700';
+    ctx.font = '24px "Segoe UI", sans-serif';
+    ctx.fillText(`BEST: ${formatScore(bestScore)}`, width / 2, height / 2 + 20);
+
+    // Waves
+    ctx.fillStyle = '#aee9ff';
+    ctx.font = '18px "Segoe UI", sans-serif';
+    ctx.fillText(`Waves survived: ${wave - 1}`, width / 2, height / 2 + 50);
+
+    // Pulsing Enter
+    const pulse = Math.sin(time / 300) * 0.5 + 0.5;
+    ctx.globalAlpha = 0.5 + pulse * 0.5;
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '24px "Segoe UI", sans-serif';
+    ctx.fillText('Press ENTER to Restart', width / 2, height / 2 + 120);
   }
 
   renderOverlay(ctx, width, height, title, subtitle) {

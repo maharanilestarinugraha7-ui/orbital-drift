@@ -113,6 +113,10 @@ function loop(now) {
     if (ship.shields <= 0) {
       state = 'GAMEOVER';
       sound.playGameOver();
+      const best = parseInt(localStorage.getItem('bestScore') || '0');
+      if (score > best) {
+        localStorage.setItem('bestScore', score);
+      }
     }
   }
 
@@ -126,7 +130,8 @@ function loop(now) {
   if (ship) ship.render(ctx);
   particles.render(ctx);
   floatingText.render(ctx);
-  hud.render(state, ship, score, combo, wave, now);
+  const bestScore = parseInt(localStorage.getItem('bestScore') || '0');
+  hud.render(state, ship, score, combo, wave, now, bestScore);
 
   requestAnimationFrame(loop);
 }
