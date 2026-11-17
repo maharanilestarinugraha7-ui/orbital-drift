@@ -29,7 +29,6 @@ export class HUD {
       ctx.textAlign = 'right';
       ctx.fillText(`WAVE: ${wave}`, width - 20, 35);
 
-      if (combo > 1) {
         const pulse = 1 + Math.sin(time / 100) * 0.1;
         ctx.textAlign = 'center';
         ctx.fillStyle = '#ffd700';
@@ -38,7 +37,6 @@ export class HUD {
         ctx.shadowBlur = 10;
         ctx.fillText(`${combo}x COMBO`, width / 2, 40);
         ctx.shadowBlur = 0;
-      }
 
       // Wave Flash
       if (wave > this.lastWave) {

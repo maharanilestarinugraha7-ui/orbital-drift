@@ -119,8 +119,10 @@ function loop(now) {
   // Render
   starfield.render(ctx, canvas.width, canvas.height, canvas.width / 2, canvas.height / 2);
   star.render(ctx, state === 'PLAYING');
-  for (let d of debris) d.render(ctx);
-  for (let c of comets) c.render(ctx);
+  if (state === 'PLAYING') {
+    for (let d of debris) d.render(ctx);
+    for (let c of comets) c.render(ctx);
+  }
   if (ship) ship.render(ctx);
   particles.render(ctx);
   floatingText.render(ctx);
