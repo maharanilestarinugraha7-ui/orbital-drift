@@ -106,61 +106,62 @@ export class Star {
     }
   }
 
-  render(ctx) {
+  render(ctx, renderFlare = true) {
     ctx.save();
 
     // 1. Solar Flare Render
-    if (this.flareState === 'CHARGING') {
-      // Telegraphed warning sector arc
-      const chargeRatio = 1 - (this.flareTimer / this.flareChargeTime);
-      ctx.save();
-      ctx.fillStyle = `rgba(255, 80, 0, ${0.1 + chargeRatio * 0.25})`;
-      ctx.strokeStyle = `rgba(255, 120, 0, ${0.4 + Math.sin(this.time * 20) * 0.3})`;
-      ctx.lineWidth = 2;
+    if (renderFlare && (this.flareState === 'CHARGING' || this.flareState === 'ERUPTING')) {
+      if (this.flareState === 'CHARGING') {
+        // Telegraphed warning sector arc
+        const chargeRatio = 1 - (this.flareTimer / this.flareChargeTime);
+        ctx.save();
+        ctx.fillStyle = `rgba(255, 80, 0, ${0.1 + chargeRatio * 0.25})`;
+        ctx.strokeStyle = `rgba(255, 120, 0, ${0.4 + Math.sin(this.time * 20) * 0.3})`;
+        ctx.lineWidth = 2;
 
-      ctx.beginPath();
-      ctx.moveTo(this.cx, this.cy);
-      ctx.arc(this.cx, this.cy, this.flareReach, this.flareAngle - this.flareWidth / 2, this.flareAngle + this.flareWidth / 2);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-      ctx.restore();
-    } else if (this.flareState === 'ERUPTING') {
-      // Full erupting plasma beam
-      const activeRatio = this.flareTimer / this.flareActiveTime;
-      const alpha = Math.sin(activeRatio * Math.PI);
+        ctx.beginPath();
+        ctx.moveTo(this.cx, this.cy);
+        ctx.arc(this.cx, this.cy, this.flareReach, this.flareAngle - this.flareWidth / 2, this.flareAngle + this.flareWidth / 2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      } else if (this.flareState === 'ERUPTING') {
+        // Full erupting plasma beam
+        const activeRatio = this.flareTimer / this.flareActiveTime;
+        const alpha = Math.sin(activeRatio * Math.PI);
 
-      ctx.save();
-      ctx.fillStyle = `rgba(255, 100, 0, ${0.4 * alpha})`;
-      ctx.strokeStyle = `rgba(255, 220, 100, ${0.8 * alpha})`;
-      ctx.lineWidth = 4;
-      ctx.shadowColor = '#ff5500';
-      ctx.shadowBlur = 30;
+        ctx.save();
+        ctx.fillStyle = `rgba(255, 100, 0, ${0.4 * alpha})`;
+        ctx.strokeStyle = `rgba(255, 220, 100, ${0.8 * alpha})`;
+        ctx.lineWidth = 4;
+        ctx.shadowColor = '#ff5500';
+        ctx.shadowBlur = 30;
 
-      ctx.beginPath();
-      ctx.moveTo(this.cx, this.cy);
-      ctx.arc(this.cx, this.cy, this.flareReach, this.flareAngle - this.flareWidth / 2, this.flareAngle + this.flareWidth / 2);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-      ctx.restore();
+        ctx.beginPath();
+        ctx.moveTo(this.cx, this.cy);
+        ctx.arc(this.cx, this.cy, this.flareReach, this.flareAngle - this.flareWidth / 2, this.flareAngle + this.flareWidth / 2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
     }
 
     // 2. Multi-layered Central Star Surface & Corona
-    const pulse = Math.sin(this.time * 2.5) * 3;
+    const pulse = Math.sin(this.time * 1.5) * 5;
     const currentRadius = this.radius + pulse;
 
-    // Outer Corona Glow
-    const coronaGrad = ctx.createRadialGradient(this.cx, this.cy, currentRadius * 0.5, this.cx, this.cy, currentRadius * 2.2);
-    coronaGrad.addColorStop(0, 'rgba(255, 240, 150, 0.9)');
-    coronaGrad.addColorStop(0.3, 'rgba(255, 140, 0, 0.4)');
-    coronaGrad.addColorStop(0.7, 'rgba(255, 50, 0, 0.15)');
-    coronaGrad.addColorStop(1, 'rgba(255, 0, 0, 0)');
-
-    ctx.fillStyle = coronaGrad;
-    ctx.beginPath();
-    ctx.arc(this.cx, this.cy, currentRadius * 2.2, 0, Math.PI * 2);
-    ctx.fill();
+    // Outer Corona Glow (Layered)
+    for (let i = 1; i <= 3; i++) {
+      const grad = ctx.createRadialGradient(this.cx, this.cy, currentRadius, this.cx, this.cy, currentRadius * (1.5 + i * 0.5));
+      grad.addColorStop(0, `rgba(255, ${200 - i * 30}, 50, ${0.2 / i})`);
+      grad.addColorStop(1, 'rgba(255, 0, 0, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(this.cx, this.cy, currentRadius * (1.5 + i * 0.5), 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     // Hot Core
     ctx.shadowColor = '#ffe259';
