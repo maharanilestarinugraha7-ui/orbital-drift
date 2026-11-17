@@ -16,10 +16,12 @@ export class SolarWraith {
     this.timer = 25; // 25s retreat timer
     this.alive = true;
     this.projectiles = [];
+    this.time = 0;
   }
 
   update(dt, ship, particles, floatingText) {
     this.timer -= dt;
+    this.time += dt;
     if (this.timer <= 0) {
       this.alive = false;
       return;
@@ -88,22 +90,61 @@ export class SolarWraith {
     }
   }
 
-  }
-
   render(ctx) {
     ctx.save();
     ctx.translate(this.x, this.y);
-    // Molten entity visuals
-    ctx.fillStyle = '#ff4400';
+    
+    // Roiling animation
+    const roil = Math.sin(this.time * 5) * 5;
+    const radius = 35 + roil;
+    
+    // Core - White-hot
+    ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.arc(0, 0, 30, 0, Math.PI * 2);
+    ctx.arc(0, 0, radius * 0.4, 0, Math.PI * 2);
     ctx.fill();
+    
+    // Mid glow - Orange
+    ctx.fillStyle = '#ff9900';
+    ctx.beginPath();
+    ctx.arc(0, 0, radius * 0.7, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Body - Deep red / jagged
+    ctx.fillStyle = '#ff2200';
+    ctx.beginPath();
+    for (let i = 0; i < 32; i++) {
+        const ang = (i / 32) * Math.PI * 2;
+        const r = radius + (Math.sin(this.time * 10 + i) * 5); // Jagged edge
+        ctx.lineTo(Math.cos(ang) * r, Math.sin(ang) * r);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    // Eyes
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(-10, -10, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(10, -10, 3, 0, Math.PI * 2);
+    ctx.fill();
+    
     ctx.restore();
 
     for (let p of this.projectiles) {
-      ctx.fillStyle = '#ff0000';
+      // Trail
+      ctx.strokeStyle = '#ff9900';
+      ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(p.x - p.vx * 0.2, p.y - p.vy * 0.2);
+      ctx.stroke();
+
+      // Projectile
+      ctx.fillStyle = '#ff4400';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 9, 0, Math.PI * 2);
       ctx.fill();
     }
   }

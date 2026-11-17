@@ -12,7 +12,7 @@ export class HUD {
     this.waveFlashTimer = 0;
   }
 
-  render(gameState, ship, score, combo, wave, time, bestScore) {
+  render(gameState, ship, score, combo, wave, time, bestScore, boss) {
     const { width, height } = this.canvas;
     const ctx = this.ctx;
     
@@ -21,6 +21,9 @@ export class HUD {
     ctx.save();
 
     if (gameState === 'PLAYING' || gameState === 'PAUSED') {
+      // Boss Health
+      this.renderBossHealth(ctx, width, height, boss);
+
       // 1. Top HUD: Score & Wave
       ctx.fillStyle = '#e2f1ff';
       ctx.font = '20px "Segoe UI", system-ui, sans-serif';
@@ -90,6 +93,32 @@ export class HUD {
     }
 
     ctx.restore();
+  }
+
+  renderBossHealth(ctx, width, height, boss) {
+    if (!boss || !boss.alive) return;
+    
+    const barWidth = 300;
+    const barHeight = 20;
+    const x = (width - barWidth) / 2;
+    const y = 50;
+    
+    // Backing
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(x, y, barWidth, barHeight);
+    
+    // Fill
+    const gradient = ctx.createLinearGradient(x, y, x + barWidth, y);
+    gradient.addColorStop(0, '#ff0000');
+    gradient.addColorStop(1, '#ff9900');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(x, y, (boss.health / boss.maxHealth) * barWidth, barHeight);
+    
+    // Label
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 16px "Segoe UI", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('SOLAR WRAITH', x + barWidth / 2, y + 15);
   }
 
   renderTitle(ctx, width, height, time) {
