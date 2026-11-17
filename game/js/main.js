@@ -23,6 +23,7 @@ let combo = 1;
 let lastHarvestTime = 0;
 let shake = 0;
 let wave = 1;
+let waveTimer = 0;
 let cometSpawnTimer = 0;
 let keys = {};
 
@@ -63,6 +64,10 @@ function startGame() {
   score = 0;
   combo = 1;
   wave = 1;
+  waveTimer = 0;
+  // Dev hook: ?wave=N starts mid-game (used for capture/debug)
+  const devWave = Number(new URLSearchParams(location.search).get('wave') || 0);
+  if (devWave >= 5) wave = devWave;
   ship = new Ship(canvas.width / 2, canvas.height / 2);
   ship.invulnerableTimer = 3.0;
   star = new Star(canvas.width / 2, canvas.height / 2);
@@ -77,7 +82,7 @@ function startGame() {
 
 // Spawning Logic
 function spawnWave() {
-  const debrisCount = wave <= 3 ? 5 : 3 + wave;
+  const debrisCount = wave <= 3 ? 5 : Math.min(3 + wave, 7);
   for (let i = 0; i < debrisCount; i++) {
     let d;
     // Ensure debris spawns at least 70px from ship orbit radius
@@ -171,6 +176,14 @@ function loop(now) {
 
     if (debris.length === 0) {
       wave++;
+      waveTimer = 0;
+      spawnWave();
+    }
+    // Waves also advance on a timer so slower players still meet the boss
+    waveTimer += dt;
+    if (waveTimer >= 20) {
+      wave++;
+      waveTimer = 0;
       spawnWave();
     }
 
