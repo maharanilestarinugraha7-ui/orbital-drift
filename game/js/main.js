@@ -120,7 +120,7 @@ function loop(now) {
       }
 
       // Boss
-      if (wave % 1 === 0 && !boss) {
+      if (wave % 5 === 0 && !boss) {
         boss = new SolarWraith(canvas.width / 2, canvas.height / 2, 250);
       }
       if (boss) {
