@@ -23,7 +23,7 @@ let keys = {};
 const starfield = new Starfield();
 const particles = new ParticleManager();
 const floatingText = new FloatingTextManager();
-let ship, star, comets, debris;
+let ship = null, star = null, comets = [], debris = [];
 let hud = new HUD(canvas);
 
 // Input Setup
@@ -72,6 +72,7 @@ function spawnWave() {
   for (let i = 0; i < 3 + wave; i++) {
     debris.push(new Debris(canvas.width / 2, canvas.height / 2, 200 + wave * 30));
   }
+  if (!star) star = new Star(canvas.width / 2, canvas.height / 2);
   star.triggerFlare();
   sound.playWaveStart();
 }
@@ -120,7 +121,7 @@ function loop(now) {
   star.render(ctx);
   for (let d of debris) d.render(ctx);
   for (let c of comets) c.render(ctx);
-  ship.render(ctx);
+  if (ship) ship.render(ctx);
   particles.render(ctx);
   floatingText.render(ctx);
   hud.render(state, ship, score, combo, wave);

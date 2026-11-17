@@ -13,6 +13,8 @@ export class HUD {
   render(gameState, ship, score, combo, wave) {
     const { width, height } = this.canvas;
     const ctx = this.ctx;
+    
+    if (!ship) ship = { maxShields: 3, shields: 0, energy: 0, maxEnergy: 100 };
 
     ctx.save();
 
