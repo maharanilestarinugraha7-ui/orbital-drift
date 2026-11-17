@@ -75,9 +75,12 @@ function spawnWave() {
   for (let i = 0; i < debrisCount; i++) {
     let d;
     // Ensure debris spawns at least 70px from ship orbit radius
+    let attempts = 0;
     do {
-      d = new Debris(canvas.width / 2, canvas.height / 2, 200 + wave * 30);
-    } while (ship && Math.abs(d.r - ship.r) < 70);
+      // randomize the debris orbit radius around the wave's base radius
+      d = new Debris(canvas.width / 2, canvas.height / 2, 120 + Math.random() * 260);
+      attempts++;
+    } while (ship && Math.abs(d.r - ship.r) < 70 && attempts < 20);
     debris.push(d);
   }
   if (!star) star = new Star(canvas.width / 2, canvas.height / 2);
