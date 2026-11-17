@@ -71,8 +71,14 @@ function startGame() {
 
 // Spawning Logic
 function spawnWave() {
-  for (let i = 0; i < 3 + wave; i++) {
-    debris.push(new Debris(canvas.width / 2, canvas.height / 2, 200 + wave * 30));
+  const debrisCount = wave <= 3 ? 5 : 3 + wave;
+  for (let i = 0; i < debrisCount; i++) {
+    let d;
+    // Ensure debris spawns at least 70px from ship orbit radius
+    do {
+      d = new Debris(canvas.width / 2, canvas.height / 2, 200 + wave * 30);
+    } while (ship && Math.abs(d.r - ship.r) < 70);
+    debris.push(d);
   }
   if (!star) star = new Star(canvas.width / 2, canvas.height / 2);
   star.triggerFlare();
