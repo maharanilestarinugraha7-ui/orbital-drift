@@ -38,6 +38,8 @@ export class Ship {
     this.invulnerableTimer = 0;      // Invincible after hit or during boost
     this.hitFlashTimer = 0;          // Screen/ship flash on damage
     this.heatDamageTimer = 0;        // Damage over time in heat zone
+    this.magnetTimer = 0;
+    this.timeSlowTimer = 0;
 
     // Trail particles / ribbon points
     this.trail = [];
@@ -85,8 +87,20 @@ export class Ship {
     return false;
   }
 
+  activateMagnet(duration) {
+    this.magnetTimer = duration;
+  }
+  
+  activateTimeSlow(duration) {
+    this.timeSlowTimer = duration;
+  }
+  
   update(dt, keys, particleManager) {
     // 1. Boost timers update
+    if (this.magnetTimer > 0) this.magnetTimer -= dt;
+    if (this.timeSlowTimer > 0) this.timeSlowTimer -= dt;
+    if (this.timeSlowTimer > 0) dt *= 0.6; // World slow
+    
     if (this.boostCooldown > 0) {
       this.boostCooldown = Math.max(0, this.boostCooldown - dt);
     }

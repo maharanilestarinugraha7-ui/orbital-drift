@@ -5,6 +5,8 @@
 import { Starfield } from './starfield.js';
 import { Ship } from './ship.js';
 import { Star, Comet, Debris, ParticleManager, FloatingTextManager } from './entities.js';
+import { Powerup } from './powerups.js';
+import { SolarWraith } from './boss.js';
 import { HUD } from './hud.js';
 import { sound } from './audio.js';
 import { randomRange } from './utils.js';
@@ -19,6 +21,7 @@ let score = 0;
 let bestScore = parseInt(localStorage.getItem('bestScore') || '0');
 let combo = 1;
 let lastHarvestTime = 0;
+let shake = 0;
 let wave = 1;
 let cometSpawnTimer = 0;
 let keys = {};
@@ -27,7 +30,7 @@ let keys = {};
 const starfield = new Starfield();
 const particles = new ParticleManager();
 const floatingText = new FloatingTextManager();
-let ship = null, star = null, comets = [], debris = [];
+let ship = null, star = null, comets = [], debris = [], powerups = [], shockwaves = [], boss = null;
 let hud = new HUD(canvas);
 
 // Input Setup
@@ -61,10 +64,13 @@ function startGame() {
   combo = 1;
   wave = 1;
   ship = new Ship(canvas.width / 2, canvas.height / 2);
-  ship.invulnerableTimer = 3.0; // Added: Invulnerability at start to prevent immediate death
+  ship.invulnerableTimer = 3.0;
   star = new Star(canvas.width / 2, canvas.height / 2);
   comets = [];
   debris = [];
+  powerups = [];
+  shockwaves = [];
+  boss = null;
   state = 'PLAYING';
   srStatus.textContent = 'Game started. Use WASD/Arrows to move, Space to boost.';
 }
@@ -98,21 +104,58 @@ function loop(now) {
   // Clear
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  if (state === 'PLAYING') {
+    if (state === 'PLAYING') {
     // Updates
     starfield.update(dt, ship.omega);
+    let oldShields = ship.shields;
     ship.update(dt, keys, particles);
+    if (ship.shields < oldShields) shake = 15;
     star.update(dt, ship, particles, floatingText, (points) => { score += points; });
 
-    for (let i = comets.length - 1; i >= 0; i--) {
-      comets[i].update(dt, ship, particles, floatingText, combo);
-      if (!comets[i].alive) {
-        score += comets[i].lastHarvestScore;
-        combo = Math.min(combo + 1, 5);
-        lastHarvestTime = now;
-        comets.splice(i, 1);
+
+      // Powerups
+      for (let i = powerups.length - 1; i >= 0; i--) {
+        powerups[i].update(dt, ship, particles, floatingText);
+        if (!powerups[i].alive) powerups.splice(i, 1);
       }
-    }
+
+      // Boss
+      if (wave % 5 === 0 && !boss) {
+        boss = new SolarWraith(canvas.width / 2, canvas.height / 2, 250);
+      }
+      if (boss) {
+        boss.update(dt, ship, particles, floatingText);
+        if (ship.isBoosting && Math.hypot(ship.x - boss.x, ship.y - boss.y) < 50) {
+            boss.takeDamage(10);
+            shake = 20;
+        }
+        if (!boss.alive) {
+          boss = null;
+          score += 2000;
+          floatingText.add('WRAITH DOWN +2000', canvas.width / 2, 100, '#FF0000');
+          for(let i=0; i<2; i++) powerups.push(new Powerup(ship.x + Math.random()*100-50, ship.y + Math.random()*100-50, 'MAGNET'));
+        }
+      }
+
+      for (let i = comets.length - 1; i >= 0; i--) {
+        comets[i].update(dt, ship, particles, floatingText, combo);
+        if (!comets[i].alive) {
+          let c = comets[i];
+          score += c.lastHarvestScore;
+          combo = Math.min(combo + 1, 5);
+          lastHarvestTime = now;
+          comets.splice(i, 1);
+          shockwaves.push({x: c.x, y: c.y, r: 0, life: 0.5});
+        }
+      }
+
+      // Update shockwaves
+      for (let i = shockwaves.length - 1; i >= 0; i--) {
+        shockwaves[i].r += 400 * dt;
+        shockwaves[i].life -= dt;
+        if (shockwaves[i].life <= 0) shockwaves.splice(i, 1);
+      }
+
 
     if (now - lastHarvestTime > 3500 && combo > 1) {
       combo = 1;
@@ -147,16 +190,32 @@ function loop(now) {
 
   // Render
   starfield.render(ctx, canvas.width, canvas.height, canvas.width / 2, canvas.height / 2);
+  
+  ctx.save();
+  ctx.translate(Math.random()*shake-shake/2, Math.random()*shake-shake/2);
+  
   star.render(ctx, state === 'PLAYING');
   if (state === 'PLAYING') {
     for (let d of debris) d.render(ctx);
     for (let c of comets) c.render(ctx);
+    for (let p of powerups) p.render(ctx);
+    for (let s of shockwaves) {
+        ctx.strokeStyle = `rgba(255, 255, 255, ${s.life * 2})`;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+    if (boss) boss.render(ctx);
   }
   if (ship) ship.render(ctx);
   particles.render(ctx);
   floatingText.render(ctx);
+  
+  ctx.restore();
+  
   hud.render(state, ship, score, combo, wave, now, bestScore);
-
+  
+  shake *= 0.9;
   requestAnimationFrame(loop);
 }
 
