@@ -2,7 +2,7 @@
  * Orbital Drift - Player Ship & Orbital Physics
  */
 
-import { clamp, polarToCartesian, normalizeAngle } from './utils.js';
+import { clamp, polarToCartesian, normalizeAngle, randomRange } from './utils.js';
 import { sound } from './audio.js';
 
 export class Ship {
