@@ -71,7 +71,7 @@ export class Ship {
     if (this.invulnerableTimer > 0) return false;
 
     this.shields -= amount;
-    this.invulnerableTimer = 1.5; // 1.5s invincibility frames
+    this.invulnerableTimer = 1.2; // 1.2s invincibility frames
     this.hitFlashTimer = 0.3;
     sound.playHit();
     return true;

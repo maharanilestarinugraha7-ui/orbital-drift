@@ -67,7 +67,7 @@ export class Star {
             // Damage shields slowly
             if (ship.heatDamageTimer <= 0) {
                 ship.takeDamage(1);
-                ship.heatDamageTimer = 1.0; // Damage interval
+                ship.heatDamageTimer = 6.0; // Damage interval
                 // TODO: Trigger vignette
             }
         }
@@ -334,7 +334,7 @@ export class Comet {
       }
       
       if (floatingTextManager) {
-        floatingTextManager.addText(`SHATTER +${this.lastHarvestScore}`, this.x, this.y, '#ffffff');
+        floatingTextManager.addText(`SHATTER +${this.lastHarvestScore}`, this.x, this.y, '#ff00ff');
       }
       return;
     }
@@ -579,8 +579,8 @@ export class FloatingTextManager {
       x: x,
       y: y,
       color: color,
-      life: 1.1,
-      maxLife: 1.1
+      life: 1.6,
+      maxLife: 1.6
     });
   }
 
@@ -599,14 +599,14 @@ export class FloatingTextManager {
   render(ctx) {
     ctx.save();
     ctx.textAlign = 'center';
-    ctx.font = 'bold 30px "Segoe UI", system-ui, sans-serif'; // Larger font
+    ctx.font = 'bold 40px "Segoe UI", system-ui, sans-serif'; // Larger font
 
     for (let t of this.texts) {
       const alpha = Math.max(0, t.life / t.maxLife);
       ctx.globalAlpha = alpha;
       ctx.fillStyle = t.color;
       ctx.shadowColor = t.color;
-      ctx.shadowBlur = 20; // More glow
+      ctx.shadowBlur = 30; // More glow
       ctx.shadowOffsetX = 2;
       ctx.shadowOffsetY = 2;
 
