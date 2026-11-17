@@ -124,55 +124,85 @@ export class HUD {
   }
 
   renderGameOver(ctx, width, height, time, score, bestScore, wave) {
-    ctx.fillStyle = 'rgba(3, 5, 13, 0.85)';
-    ctx.fillRect(0, 0, width, height);
-
+    ctx.save();
+    
+    // Glass panel
+    ctx.fillStyle = 'rgba(10, 10, 20, 0.8)';
+    ctx.strokeStyle = '#ff0000';
+    ctx.lineWidth = 4;
+    ctx.shadowColor = '#ff0000';
+    ctx.shadowBlur = 10;
+    
+    const panelWidth = 500;
+    const panelHeight = 350;
+    const x = (width - panelWidth) / 2;
+    const y = (height - panelHeight) / 2;
+    
+    ctx.fillRect(x, y, panelWidth, panelHeight);
+    ctx.strokeRect(x, y, panelWidth, panelHeight);
+    
     ctx.textAlign = 'center';
 
     // MISSION FAILED - Red neon glow
     ctx.shadowColor = '#ff0000';
-    ctx.shadowBlur = 20;
+    ctx.shadowBlur = 10;
     ctx.fillStyle = '#ff3333';
-    ctx.font = 'bold 64px "Segoe UI", sans-serif';
-    ctx.fillText('MISSION FAILED', width / 2, height / 2 - 100);
+    ctx.font = 'bold 50px "Segoe UI", sans-serif';
+    ctx.fillText('MISSION FAILED', width / 2, y + 60);
     ctx.shadowBlur = 0;
 
     // Final Score
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 48px "Segoe UI", sans-serif';
-    ctx.fillText(`FINAL SCORE: ${formatScore(score)}`, width / 2, height / 2 - 20);
+    ctx.font = 'bold 36px "Segoe UI", sans-serif';
+    ctx.fillText(`SCORE: ${formatScore(score)}`, width / 2, y + 130);
 
     // Best Score
     ctx.fillStyle = '#ffd700';
     ctx.font = '24px "Segoe UI", sans-serif';
-    ctx.fillText(`BEST: ${formatScore(bestScore)}`, width / 2, height / 2 + 20);
+    ctx.fillText(`BEST: ${formatScore(bestScore)}`, width / 2, y + 170);
 
     // Waves
     ctx.fillStyle = '#aee9ff';
     ctx.font = '18px "Segoe UI", sans-serif';
-    ctx.fillText(`Waves survived: ${wave - 1}`, width / 2, height / 2 + 50);
+    ctx.fillText(`Waves survived: ${wave - 1}`, width / 2, y + 200);
 
     // Pulsing Enter
     const pulse = Math.sin(time / 300) * 0.5 + 0.5;
     ctx.globalAlpha = 0.5 + pulse * 0.5;
     ctx.fillStyle = '#ffffff';
     ctx.font = '24px "Segoe UI", sans-serif';
-    ctx.fillText('Press ENTER to Restart', width / 2, height / 2 + 120);
+    ctx.fillText('Press ENTER to Restart', width / 2, y + 280);
+    
+    ctx.restore();
   }
 
   renderOverlay(ctx, width, height, title, subtitle) {
-    // ...
-
-    ctx.fillStyle = 'rgba(3, 5, 13, 0.7)';
-    ctx.fillRect(0, 0, width, height);
-
+    ctx.save();
+    
+    // Glass panel
+    ctx.fillStyle = 'rgba(10, 10, 20, 0.6)';
+    ctx.strokeStyle = '#00ffff';
+    ctx.lineWidth = 4;
+    ctx.shadowColor = '#00ffff';
+    ctx.shadowBlur = 10;
+    
+    const panelWidth = 400;
+    const panelHeight = 200;
+    const x = (width - panelWidth) / 2;
+    const y = (height - panelHeight) / 2;
+    
+    ctx.fillRect(x, y, panelWidth, panelHeight);
+    ctx.strokeRect(x, y, panelWidth, panelHeight);
+    
     ctx.textAlign = 'center';
     ctx.fillStyle = '#e2f1ff';
     ctx.font = 'bold 48px "Segoe UI", sans-serif';
     ctx.fillText(title, width / 2, height / 2 - 20);
-
+    
     ctx.font = '20px "Segoe UI", sans-serif';
     ctx.fillStyle = '#aee9ff';
     ctx.fillText(subtitle, width / 2, height / 2 + 20);
+    
+    ctx.restore();
   }
 }

@@ -204,7 +204,23 @@ export class Ship {
   render(ctx) {
     ctx.save();
 
-    // 1. Draw glowing neon cyan trail ribbon
+    // 1. Boost flame plume
+    if (this.isBoosting) {
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.rotate(this.heading);
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(-10, 0);
+      ctx.lineTo(-60, 5);
+      ctx.lineTo(-60, -5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // 2. Draw glowing neon cyan trail ribbon
+    // ... existing trail code
     if (this.trail.length > 1) {
       ctx.save();
       for (let i = 0; i < this.trail.length - 1; i++) {
@@ -226,7 +242,7 @@ export class Ship {
       ctx.restore();
     }
 
-    // 2. Position context at ship
+    // 3. Position context at ship
     ctx.translate(this.x, this.y);
     ctx.rotate(this.heading);
 
@@ -239,12 +255,12 @@ export class Ship {
       ctx.shadowBlur = 12;
     }
 
-    // 3. Draw futuristic neon vector ship
+    // 4. Draw futuristic neon vector ship
     ctx.strokeStyle = this.hitFlashTimer > 0 ? '#ff4477' : '#00ffff';
     ctx.fillStyle = '#061a29';
     ctx.lineWidth = 2.5;
 
-    // Sleek delta hull
+    // Hull
     ctx.beginPath();
     ctx.moveTo(16, 0);                 // Ship Nose
     ctx.lineTo(-12, -11);              // Left Wingtip
@@ -254,29 +270,44 @@ export class Ship {
     ctx.fill();
     ctx.stroke();
 
-    // Cockpit canopy glow
+    // Cockpit glint
     ctx.fillStyle = this.isBoosting ? '#ffffff' : '#99f3ff';
     ctx.beginPath();
     ctx.ellipse(2, 0, 5, 3, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Engine glow core
+    // Engine glow (brightens with thrust/boost)
+    const glow = 2.5 + (this.isBoosting ? 4 : 0);
     ctx.fillStyle = this.isBoosting ? '#00ffff' : '#ff9900';
     ctx.beginPath();
-    ctx.arc(-7, 0, this.isBoosting ? 4 : 2.5, 0, Math.PI * 2);
+    ctx.arc(-7, 0, glow, 0, Math.PI * 2);
     ctx.fill();
 
-    // 4. Invulnerability / Boost Shield Sphere
-    if (this.invulnerableTimer > 0 || this.isBoosting) {
-      const shieldAlpha = this.isBoosting ? 0.6 : (Math.sin(Date.now() * 0.02) * 0.2 + 0.4);
-      ctx.strokeStyle = this.isBoosting ? 'rgba(0, 255, 255, ' + shieldAlpha + ')' : 'rgba(0, 180, 255, ' + shieldAlpha + ')';
-      ctx.lineWidth = 2;
-      ctx.shadowColor = '#00f0ff';
-      ctx.shadowBlur = 15;
-
+    // 5. Hexagonal shield ring flash when hit
+    if (this.hitFlashTimer > 0) {
+      ctx.strokeStyle = '#ff0055';
+      ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.arc(0, 0, this.radius + 6, 0, Math.PI * 2);
+      for (let i = 0; i < 6; i++) {
+        const ang = (i / 6) * Math.PI * 2;
+        const x = Math.cos(ang) * (this.radius + 6);
+        const y = Math.sin(ang) * (this.radius + 6);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
       ctx.stroke();
+    } else if (this.invulnerableTimer > 0 || this.isBoosting) {
+        // ... existing shield code
+        const shieldAlpha = this.isBoosting ? 0.6 : (Math.sin(Date.now() * 0.02) * 0.2 + 0.4);
+        ctx.strokeStyle = this.isBoosting ? 'rgba(0, 255, 255, ' + shieldAlpha + ')' : 'rgba(0, 180, 255, ' + shieldAlpha + ')';
+        ctx.lineWidth = 2;
+        ctx.shadowColor = '#00f0ff';
+        ctx.shadowBlur = 15;
+
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius + 6, 0, Math.PI * 2);
+        ctx.stroke();
     }
 
     ctx.restore();

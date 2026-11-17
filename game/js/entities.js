@@ -242,6 +242,21 @@ export class Comet {
     if (this.tail.length > 18) this.tail.pop();
     for (let p of this.tail) p.age += dt;
 
+    // Tiny ice particles
+    if (particleManager && Math.random() < 0.2) {
+      particleManager.addParticle({
+        x: this.x,
+        y: this.y,
+        vx: (Math.random() - 0.5) * 20,
+        vy: (Math.random() - 0.5) * 20,
+        color: '#ffffff',
+        life: 0.2,
+        maxLife: 0.2,
+        size: 1,
+        glow: true
+      });
+    }
+
     // Check Harvest Collision with Ship
     const magnetRadius = ship.isBoosting ? this.harvestRadius + 35 : this.harvestRadius;
     const dToShip = Math.hypot(ship.x - this.x, ship.y - this.y);
@@ -295,42 +310,57 @@ export class Comet {
     if (!this.alive) return;
 
     ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.time * 3); // Rotating
 
-    // Comet Tail
+    // Faceted Crystal Polygon
+    ctx.strokeStyle = this.color;
+    ctx.fillStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.shadowColor = this.glowColor;
+    ctx.shadowBlur = 10;
+
+    ctx.beginPath();
+    // Simplified faceted shape
+    ctx.moveTo(0, -this.radius);
+    ctx.lineTo(this.radius, 0);
+    ctx.lineTo(0, this.radius);
+    ctx.lineTo(-this.radius, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Shimmering highlight
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.beginPath();
+    ctx.moveTo(0, -this.radius);
+    ctx.lineTo(this.radius * 0.5, 0);
+    ctx.lineTo(0, this.radius * 0.5);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+
+    // Comet Tail (Gradient Fade)
     if (this.tail.length > 1) {
+      ctx.save();
       for (let i = 0; i < this.tail.length - 1; i++) {
         const p1 = this.tail[i];
         const p2 = this.tail[i + 1];
         const ratio = 1 - i / this.tail.length;
-
+        
         ctx.strokeStyle = this.color;
-        ctx.globalAlpha = ratio * 0.6;
-        ctx.lineWidth = this.radius * ratio;
+        ctx.globalAlpha = ratio * 0.5;
+        ctx.lineWidth = this.radius * 0.5 * ratio;
+        ctx.lineCap = 'round';
+        
         ctx.beginPath();
         ctx.moveTo(p1.x, p1.y);
         ctx.lineTo(p2.x, p2.y);
         ctx.stroke();
       }
+      ctx.restore();
     }
-
-    // Glowing Core
-    ctx.globalAlpha = 1.0;
-    ctx.shadowColor = this.glowColor;
-    ctx.shadowBlur = 18;
-    ctx.fillStyle = '#ffffff';
-
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Outer aura ring
-    ctx.strokeStyle = this.color;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius + 4 + Math.sin(this.time * 6) * 2, 0, Math.PI * 2);
-    ctx.stroke();
-
-    ctx.restore();
   }
 }
 

@@ -18,16 +18,18 @@ export class Starfield {
 
     for (let i = 0; i < this.count; i++) {
       // Create stars in polar-like distribution around center
-      const layer = Math.random() < 0.5 ? 1 : (Math.random() < 0.8 ? 2 : 3);
+      const layer = Math.random() < 0.3 ? 1 : (Math.random() < 0.7 ? 2 : 3);
       this.stars.push({
-        layer: layer, // 1: far (slow), 2: mid, 3: near (fast)
+        layer: layer, // 1: far, 2: mid, 3: near
         radius: randomRange(30, 1400),
         theta: randomRange(0, Math.PI * 2),
-        size: layer * 0.7 + Math.random() * 0.8,
-        alpha: randomRange(0.2, 0.95),
+        // Distinct sizes and brightness per layer
+        size: layer * 0.5 + Math.random() * 0.5,
+        alpha: layer * 0.25 + Math.random() * 0.2,
         color: randomChoice(colors),
         pulseSpeed: randomRange(0.5, 2.5),
-        pulsePhase: Math.random() * Math.PI * 2
+        pulsePhase: Math.random() * Math.PI * 2,
+        twinkle: Math.random() < 0.2 // 20% chance to twinkle
       });
     }
   }
@@ -67,8 +69,12 @@ export class Starfield {
       if (x < -10 || x > width + 10 || y < -10 || y > height + 10) continue;
 
       // Twinkle calculation
-      const twinkle = Math.sin(this.time * star.pulseSpeed + star.pulsePhase) * 0.25 + 0.75;
-      const currentAlpha = Math.min(1, star.alpha * twinkle);
+      let currentAlpha = star.alpha;
+      if (star.twinkle) {
+        const twinkle = Math.sin(this.time * star.pulseSpeed + star.pulsePhase) * 0.5 + 0.5;
+        currentAlpha *= twinkle;
+      }
+      currentAlpha = Math.min(1, currentAlpha);
 
       ctx.save();
       ctx.globalAlpha = currentAlpha;
@@ -90,21 +96,28 @@ export class Starfield {
     ctx.save();
     ctx.globalCompositeOperation = 'screen';
 
-    // Cyan cosmic dust cloud
-    const neb1 = ctx.createRadialGradient(cx - width * 0.25, cy - height * 0.25, 20, cx - width * 0.25, cy - height * 0.25, width * 0.45);
-    neb1.addColorStop(0, 'rgba(0, 240, 255, 0.05)');
-    neb1.addColorStop(0.5, 'rgba(0, 150, 220, 0.02)');
-    neb1.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    ctx.fillStyle = neb1;
-    ctx.fillRect(0, 0, width, height);
+    // 2-3 soft radial gradients drifting slowly
+    const time = this.time * 0.1;
+    const colors = [
+      {r: 80, g: 0, b: 150},  // Deep Purple
+      {r: 0, g: 150, b: 150}, // Teal
+      {r: 50, g: 0, b: 200}   // Indigo
+    ];
 
-    // Magenta stellar dust cloud
-    const neb2 = ctx.createRadialGradient(cx + width * 0.3, cy + height * 0.3, 30, cx + width * 0.3, cy + height * 0.3, width * 0.5);
-    neb2.addColorStop(0, 'rgba(255, 0, 180, 0.04)');
-    neb2.addColorStop(0.5, 'rgba(180, 0, 150, 0.015)');
-    neb2.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    ctx.fillStyle = neb2;
-    ctx.fillRect(0, 0, width, height);
+    colors.forEach((c, i) => {
+      const angle = time + i * (Math.PI * 2 / 3);
+      const x = cx + Math.cos(angle) * width * 0.2;
+      const y = cy + Math.sin(angle) * height * 0.2;
+      const radius = width * (0.6 + Math.sin(time) * 0.1);
+      
+      const grad = ctx.createRadialGradient(x, y, 0, x, y, radius);
+      grad.addColorStop(0, `rgba(${c.r}, ${c.g}, ${c.b}, 0.15)`);
+      grad.addColorStop(0.5, `rgba(${c.r}, ${c.g}, ${c.b}, 0.05)`);
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, width, height);
+    });
 
     ctx.restore();
   }
