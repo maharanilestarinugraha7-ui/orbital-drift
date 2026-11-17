@@ -37,6 +37,7 @@ export class Ship {
 
     this.invulnerableTimer = 0;      // Invincible after hit or during boost
     this.hitFlashTimer = 0;          // Screen/ship flash on damage
+    this.heatDamageTimer = 0;        // Damage over time in heat zone
 
     // Trail particles / ribbon points
     this.trail = [];
@@ -103,6 +104,10 @@ export class Ship {
 
     if (this.hitFlashTimer > 0) {
       this.hitFlashTimer = Math.max(0, this.hitFlashTimer - dt);
+    }
+    
+    if (this.heatDamageTimer > 0) {
+      this.heatDamageTimer = Math.max(0, this.heatDamageTimer - dt);
     }
 
     // Energy slow auto-recharge

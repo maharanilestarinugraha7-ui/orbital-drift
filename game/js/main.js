@@ -66,8 +66,11 @@ function startGame() {
 
 // Spawning Logic
 function spawnWave() {
-  for (let i = 0; i < 5 + wave * 2; i++) {
-    comets.push(new Comet(canvas.width / 2, canvas.height / 2, Math.random() < 0.1 ? 'SHIELD' : (Math.random() < 0.2 ? 'MULTIPLIER' : 'STANDARD')));
+  const spawnR = ship ? ship.r : canvas.width / 4;
+  for (let i = 0; i < 8 + wave * 3; i++) {
+    // 50% spawn near ship
+    const r = (Math.random() < 0.5) ? spawnR : null;
+    comets.push(new Comet(canvas.width / 2, canvas.height / 2, Math.random() < 0.1 ? 'SHIELD' : (Math.random() < 0.2 ? 'MULTIPLIER' : 'STANDARD'), r));
   }
   for (let i = 0; i < 3 + wave; i++) {
     debris.push(new Debris(canvas.width / 2, canvas.height / 2, 200 + wave * 30));
@@ -91,12 +94,12 @@ function loop(now) {
     // Updates
     starfield.update(dt, ship.omega);
     ship.update(dt, keys, particles);
-    star.update(dt, ship, particles);
+    star.update(dt, ship, particles, floatingText, (points) => { score += points; });
 
     for (let i = comets.length - 1; i >= 0; i--) {
       comets[i].update(dt, ship, particles, floatingText, combo);
       if (!comets[i].alive) {
-        score += 100 * combo;
+        score += comets[i].lastHarvestScore;
         comets.splice(i, 1);
       }
     }

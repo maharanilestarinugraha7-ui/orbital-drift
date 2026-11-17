@@ -113,14 +113,19 @@ export class HUD {
     ctx.shadowBlur = 0;
     ctx.fillStyle = '#aee9ff';
     ctx.font = '20px "Segoe UI", sans-serif';
-    ctx.fillText('Arrows/WASD: altitude + thrust · Space: boost · P: pause', width / 2, height / 2 + 20);
+    ctx.fillText('Arrows/WASD: altitude+thrust · Space: boost · P: pause', width / 2, height / 2 + 20);
+    ctx.fillStyle = '#ff9900';
+    ctx.font = 'bold 18px "Segoe UI", sans-serif';
+    ctx.fillText('WARNING: Stay out of hot zone (red ring) unless boosting (CORONA DIVE!)', width / 2, height / 2 + 50);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('Boost into small comets to SHATTER!', width / 2, height / 2 + 75);
 
     // Pulsing Enter
     const pulse = Math.sin(time / 300) * 0.5 + 0.5;
     ctx.globalAlpha = 0.5 + pulse * 0.5;
     ctx.fillStyle = '#ffffff';
     ctx.font = '24px "Segoe UI", sans-serif';
-    ctx.fillText('Press ENTER to Launch', width / 2, height / 2 + 80);
+    ctx.fillText('Press ENTER to Launch', width / 2, height / 2 + 120);
   }
 
   renderGameOver(ctx, width, height, time, score, bestScore, wave) {

@@ -13,6 +13,7 @@ export class Star {
     this.cx = cx;
     this.cy = cy;
     this.radius = 55;
+    this.hotZoneRadius = this.radius * 1.8;
     this.time = 0;
 
     // Solar flare state
@@ -38,9 +39,40 @@ export class Star {
     sound.playFlare();
   }
 
-  update(dt, ship, particleManager) {
+  update(dt, ship, particleManager, floatingTextManager, scoreCallback) {
     this.time += dt;
 
+    // Hot zone check
+    if (ship && ship.r < this.hotZoneRadius) {
+        if (ship.isBoosting) {
+            // Trigger Corona Dive if not already triggered (needs a cooldown/state)
+            if (ship.heatDamageTimer <= 0) { // Using this as a cooldown for now
+               if (scoreCallback) scoreCallback(500);
+               if (floatingTextManager) floatingTextManager.addText('CORONA DIVE +500', ship.x, ship.y, '#ffd700');
+               
+               // Golden particles
+               if (particleManager) {
+                   for (let i = 0; i < 30; i++) {
+                       const ang = Math.random() * Math.PI * 2;
+                       particleManager.addParticle({
+                           x: ship.x, y: ship.y,
+                           vx: Math.cos(ang) * 200, vy: Math.sin(ang) * 200,
+                           color: '#ffd700', life: 0.5, maxLife: 0.5, size: 4, glow: true
+                       });
+                   }
+               }
+               ship.heatDamageTimer = 2.0; // Cooldown
+            }
+        } else {
+            // Damage shields slowly
+            if (ship.heatDamageTimer <= 0) {
+                ship.takeDamage(1);
+                ship.heatDamageTimer = 1.0; // Damage interval
+                // TODO: Trigger vignette
+            }
+        }
+    }
+    
     // Flare State Machine
     if (this.flareState === 'CHARGING') {
       this.flareTimer -= dt;
@@ -108,6 +140,16 @@ export class Star {
 
   render(ctx, renderFlare = true) {
     ctx.save();
+
+    // Hot Zone Ring (Heat Shimmer)
+    const shimmer = Math.sin(this.time * 5) * 5 + 5;
+    ctx.save();
+    ctx.strokeStyle = `rgba(255, 100, 0, ${0.2 + Math.sin(this.time * 10) * 0.1})`;
+    ctx.lineWidth = 4 + shimmer * 0.5;
+    ctx.beginPath();
+    ctx.arc(this.cx, this.cy, this.hotZoneRadius + shimmer, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
 
     // 1. Solar Flare Render
     if (renderFlare && (this.flareState === 'CHARGING' || this.flareState === 'ERUPTING')) {
@@ -185,23 +227,30 @@ export class Star {
 // 2. Comets (Energy, Multiplier, Shield)
 // ==========================================
 export class Comet {
-  constructor(cx, cy, type = 'STANDARD') {
+  constructor(cx, cy, type = 'STANDARD', preferredR = null) {
     this.cx = cx;
     this.cy = cy;
     this.type = type; // STANDARD (Magenta), MULTIPLIER (Gold), SHIELD (Cyan)
 
     // Orbital / Trajectory parameters
-    this.r = randomRange(110, 480);
+    this.r = preferredR ? preferredR + randomRange(-50, 50) : randomRange(110, 480);
     this.theta = randomRange(-Math.PI, Math.PI);
     this.omega = randomRange(0.6, 1.8) * (Math.random() < 0.5 ? 1 : -1);
     this.radialSpeed = randomRange(-20, 20);
 
     this.radius = type === 'MULTIPLIER' ? 12 : (type === 'SHIELD' ? 14 : 11);
+    if (Math.random() < 0.2) { // Large comet
+        this.radius *= 1.5;
+        this.isLarge = true;
+    } else {
+        this.isLarge = false;
+    }
     this.harvestRadius = this.radius + 28; // Distance ship needs to get close
 
     this.alive = true;
     this.time = 0;
     this.tail = [];
+    this.lastHarvestScore = 0;
 
     // Visual attributes
     if (type === 'MULTIPLIER') {
@@ -267,10 +316,32 @@ export class Comet {
   }
 
   harvest(ship, particleManager, floatingTextManager, comboMultiplier) {
-    this.alive = false;
+    if (!this.isLarge && ship.isBoosting) {
+      // SHATTER
+      this.alive = false;
+      this.lastHarvestScore = 150 * comboMultiplier;
+      sound.playHarvest(comboMultiplier);
 
-    // Calculate score earned
-    const earnedScore = this.scoreValue * comboMultiplier;
+      if (particleManager) {
+        for (let i = 0; i < 30; i++) {
+          const ang = Math.random() * Math.PI * 2;
+          particleManager.addParticle({
+            x: this.x, y: this.y,
+            vx: Math.cos(ang) * 300, vy: Math.sin(ang) * 300,
+            color: '#ffffff', life: 0.4, maxLife: 0.4, size: 2, glow: true
+          });
+        }
+      }
+      
+      if (floatingTextManager) {
+        floatingTextManager.addText(`SHATTER +${this.lastHarvestScore}`, this.x, this.y, '#ffffff');
+      }
+      return;
+    }
+
+    // Normal harvest
+    this.alive = false;
+    this.lastHarvestScore = this.scoreValue * comboMultiplier;
 
     // Audio chime
     sound.playHarvest(comboMultiplier);
@@ -296,7 +367,7 @@ export class Comet {
 
     // Floating Score Text
     if (floatingTextManager) {
-      let msg = `+${earnedScore}`;
+      let msg = `+${this.lastHarvestScore}`;
       if (this.type === 'MULTIPLIER') msg += ' COMBO UP!';
       if (this.type === 'SHIELD') {
         const repaired = ship.repairShield();
@@ -528,14 +599,16 @@ export class FloatingTextManager {
   render(ctx) {
     ctx.save();
     ctx.textAlign = 'center';
-    ctx.font = 'bold 16px "Segoe UI", system-ui, sans-serif';
+    ctx.font = 'bold 30px "Segoe UI", system-ui, sans-serif'; // Larger font
 
     for (let t of this.texts) {
       const alpha = Math.max(0, t.life / t.maxLife);
       ctx.globalAlpha = alpha;
       ctx.fillStyle = t.color;
       ctx.shadowColor = t.color;
-      ctx.shadowBlur = 10;
+      ctx.shadowBlur = 20; // More glow
+      ctx.shadowOffsetX = 2;
+      ctx.shadowOffsetY = 2;
 
       ctx.fillText(t.str, t.x, t.y);
     }
