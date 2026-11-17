@@ -15,6 +15,7 @@ const srStatus = document.getElementById('sr-status');
 // Game State
 let state = 'TITLE'; // TITLE, PLAYING, PAUSED, GAMEOVER
 let score = 0;
+let bestScore = parseInt(localStorage.getItem('bestScore') || '0');
 let combo = 1;
 let wave = 1;
 let keys = {};
@@ -57,6 +58,7 @@ function startGame() {
   combo = 1;
   wave = 1;
   ship = new Ship(canvas.width / 2, canvas.height / 2);
+  ship.invulnerableTimer = 3.0; // Added: Invulnerability at start to prevent immediate death
   star = new Star(canvas.width / 2, canvas.height / 2);
   comets = [];
   debris = [];
@@ -116,9 +118,9 @@ function loop(now) {
     if (ship.shields <= 0) {
       state = 'GAMEOVER';
       sound.playGameOver();
-      const best = parseInt(localStorage.getItem('bestScore') || '0');
-      if (score > best) {
-        localStorage.setItem('bestScore', score);
+      if (score > bestScore) {
+        bestScore = score;
+        localStorage.setItem('bestScore', bestScore);
       }
     }
   }
@@ -133,7 +135,6 @@ function loop(now) {
   if (ship) ship.render(ctx);
   particles.render(ctx);
   floatingText.render(ctx);
-  const bestScore = parseInt(localStorage.getItem('bestScore') || '0');
   hud.render(state, ship, score, combo, wave, now, bestScore);
 
   requestAnimationFrame(loop);
